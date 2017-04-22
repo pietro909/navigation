@@ -2,7 +2,7 @@ effect module Navigation where { command = MyCmd, subscription = MySub } exposin
   ( back, forward
   , load, reload, reloadAndSkipCache
   , newUrl, modifyUrl
-  , program, programWithFlags
+  , program, programWithFlags, headlessProgram
   , Location
   )
 
@@ -38,6 +38,7 @@ import Task exposing (Task)
 
 
 -- PROGRAMS
+
 
 
 {-| Same as [`Html.program`][doc], but your `update` function gets messages
@@ -113,6 +114,70 @@ programWithFlags locationToMessage stuff =
     Html.programWithFlags
       { init = init
       , view = stuff.view
+      , update = stuff.update
+      , subscriptions = subs
+      }
+
+
+{-| Works the same as [`program`](#program), but it describe a headless program like
+[`Platform.program`][doc]
+
+[doc]: http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program
+
+-}
+headlessProgram
+  : (Location -> msg)
+  ->
+    { init : Location -> (model, Cmd msg)
+    , update : msg -> model -> (model, Cmd msg)
+    , subscriptions : model -> Sub msg
+    }
+  -> Program Never model msg
+headlessProgram locationToMessage stuff =
+  let
+    subs model =
+      Sub.batch
+        [ subscription (Monitor locationToMessage)
+        , stuff.subscriptions model
+        ]
+
+    init =
+      stuff.init (Native.Navigation.getLocation ())
+  in
+    Platform.program
+      { init = init
+      , update = stuff.update
+      , subscriptions = subs
+      }
+
+
+{-| Works the same as [`headlessProgram`](#headlessProgram), but can also handle flags
+ like [`Platform.programWithFlags`][doc].
+
+[doc]: http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#programWithFlags
+
+-}
+headlessProgramWithFlags
+  : (Location -> msg)
+  ->
+    { init : flags -> Location -> (model, Cmd msg)
+    , update : msg -> model -> (model, Cmd msg)
+    , subscriptions : model -> Sub msg
+    }
+  -> Program Never model msg
+headlessProgramWithFlags locationToMessage stuff =
+  let
+    subs model =
+      Sub.batch
+        [ subscription (Monitor locationToMessage)
+        , stuff.subscriptions model
+        ]
+
+    init flags =
+      stuff.init flags (Native.Navigation.getLocation ())
+  in
+    Platform.program
+      { init = init
       , update = stuff.update
       , subscriptions = subs
       }
