@@ -2,7 +2,7 @@ effect module Navigation where { command = MyCmd, subscription = MySub } exposin
   ( back, forward
   , load, reload, reloadAndSkipCache
   , newUrl, modifyUrl
-  , program, programWithFlags, headlessProgram
+  , program, programWithFlags--, headlessProgram
   , Location
   )
 
@@ -124,7 +124,6 @@ programWithFlags locationToMessage stuff =
 
 [doc]: http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program
 
--}
 headlessProgram
   : (Location -> msg)
   ->
@@ -156,7 +155,6 @@ headlessProgram locationToMessage stuff =
 
 [doc]: http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#programWithFlags
 
--}
 headlessProgramWithFlags
   : (Location -> msg)
   ->
